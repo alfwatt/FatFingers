@@ -1,8 +1,8 @@
 #!/usr/bin/python
-
 #
-# FatFingers a word-list generator which will generate variations of a given string with
-# typos you might accidnetaly make if you have fat fingers
+#
+# FatFingers is a word-list generator which will produce variations of a given
+# string with typos you might accidnetaly make if you have fat fingers
 #
 
 import sys
@@ -177,7 +177,9 @@ def shiftAndMergeNeighorKeys(neighborMap=quertyKeyNeighbors, shiftMap=quertyKeyS
         mergedMap[shifted] = neighborMap[key]
     return mergedMap
 
-def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors):
+def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeighbors=True):
+    if (shiftNeighbors):
+        shifMap = reverseAndMergeShiftPairs(quertyKeyShiftPairs)
     mergedMap = shiftAndMergeNeighorKeys(neighborMap)
     index = 0;
     while index < len(string):
@@ -188,6 +190,9 @@ def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors):
         for near in mergedMap[string[index]]:
             swapped = prefix + near + suffix
             yield swapped
+            if shiftNeighbors:
+                shifted = prefix + shifMap[near] + suffix
+                yield shifted
         index = next;
 
 def printUsage():
@@ -202,7 +207,7 @@ def printUsage():
 #
 #   TODO:
 #
-#    -d -- double each letter in the sequence
+#    -S -- slide from key to neighbor
 #    -N -- drunken neighbor swapping: iterate two levels of key neighbors
 #
 if __name__ == '__main__':

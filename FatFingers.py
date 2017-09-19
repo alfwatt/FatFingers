@@ -6,7 +6,6 @@
 #
 
 import sys
-import getopt
 
 # TODO add special values for
 #

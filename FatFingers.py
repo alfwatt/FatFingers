@@ -177,9 +177,9 @@ def shiftAndMergeNeighorKeys(neighborMap=quertyKeyNeighbors, shiftMap=quertyKeyS
         mergedMap[shifted] = neighborMap[key]
     return mergedMap
 
-def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeighbors=True):
+def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeighbors=True, slurNeighbors=False):
     if (shiftNeighbors):
-        shifMap = reverseAndMergeShiftPairs(quertyKeyShiftPairs)
+        shiftMap = reverseAndMergeShiftPairs(quertyKeyShiftPairs)
     mergedMap = shiftAndMergeNeighorKeys(neighborMap)
     index = 0;
     while index < len(string):
@@ -191,8 +191,14 @@ def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeigh
             swapped = prefix + near + suffix
             yield swapped
             if shiftNeighbors:
-                shifted = prefix + shifMap[near] + suffix
-                yield shifted
+                yield prefix + shiftMap[near] + suffix
+            if slurNeighbors:
+                yield prefix + near + char + suffix;
+                yield prefix + char + near + suffix;
+                if shiftNeighbors:
+                    yield prefix + shiftMap[near] + char + suffix;
+                    yield prefix + char + shiftMap[near] + suffix;
+        # /for
         index = next;
 
 def printUsage():
@@ -201,20 +207,18 @@ def printUsage():
     print '  -p -- pair swapping: swap each character pair in the string'
     print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
     print '  -n -- neighbor swapping: replace each character in the string with each near key'
+    print '  -N -- drunken neighbor: insert each neighbor before and after the target'
 
 #
 # FatFingers.py -- genearte a word list of typos based on neighrest neighbor and shift pairing
 #
-#   TODO:
-#
-#    -S -- slide from key to neighbor
-#    -N -- drunken neighbor swapping: iterate two levels of key neighbors
 #
 if __name__ == '__main__':
     dupeKeys = False
     swapPairs = False
     swapShift = False
     swapNear = False
+    slurNear = False
     string = sys.argv[-1]
     # print 'argv: %s string: %s' % (sys.argv, string)
 
@@ -234,6 +238,11 @@ if __name__ == '__main__':
 
     if '-n' in sys.argv:
         swapNear = True
+
+    if '-N' in sys.argv:
+        swapShift = True
+        swapNear = True
+        slurNear = True
 
     # TODO combinaions
 
@@ -265,7 +274,7 @@ if __name__ == '__main__':
 
     if swapNear:
         #print '-n %@' % (string)
-        neighbor = neighborSwapGenerator(string)
+        neighbor = neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear)
         while True:
             try:
                 print neighbor.next()

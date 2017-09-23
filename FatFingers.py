@@ -7,7 +7,7 @@ import sys
 # string with typos you might accidnetaly make if you have fat fingers
 #
 def printUsage():
-    print 'FatFingers.py -p -s "string"'
+    print 'FatFingers.py [-d] [-p] [-s] [-n] [-N] "string"'
     print '  -d -- key duplicates: double each character in the string'
     print '  -p -- pair swapping: swap each character pair in the string'
     print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
@@ -50,7 +50,7 @@ quertyKeyNeighbors = {
     'i':  ['8', '9', 'u', 'o', 'j', 'k'],
     'o':  ['9', '0', 'i', 'p', 'k', 'l'],
     'p':  ['0', '-', 'o', '[', 'l', ';'],
-    '[':  ['-', '=', 'p', ']', ';', '\'', '\n', DELETE],
+    '[':  ['-', '=', 'p', ']', ';', '\'', '\n'],
     ']':  ['=', '[', '\\', '\'', '\n', DELETE],
     '\\': [']', '\n', DELETE],
     # row 3
@@ -148,6 +148,14 @@ def duplicateKeyGenerator( string=''):
         index = next
         yield doubled
 
+def pairSwapGenerator( string=''):
+    index = 0;
+    while index < (len(string) - 1):
+        next = index + 1
+        swapped = string[:index] + string[next] + string[index] + string[next + 1:];
+        index = next
+        yield swapped
+
 def reverseAndMergeShiftPairs(shiftPairs=quertyKeyShiftPairs):
    pairKeys = shiftPairs.keys()
    mergedMap = shiftPairs.copy()
@@ -164,14 +172,6 @@ def shiftSwapGenerator( string='', shiftMap=quertyKeyShiftPairs):
         char = string[index]
         shifted = mergedMap[char]
         swapped = string[:index] + shifted + string[next:]
-        index = next
-        yield swapped
-
-def pairSwapGenerator( string=''):
-    index = 0;
-    while index < (len(string) - 1):
-        next = index + 1
-        swapped = string[:index] + string[next] + string[index] + string[next + 1:];
         index = next
         yield swapped
 
@@ -234,6 +234,7 @@ if __name__ == '__main__':
         swapShift = True
 
     if '-n' in sys.argv:
+        swapShift = True
         swapNear = True
 
     if '-N' in sys.argv:
@@ -241,34 +242,23 @@ if __name__ == '__main__':
         swapNear = True
         slurNear = True
 
+    generators = []
+
     if dupeKeys:
-        dupes = duplicateKeyGenerator(string)
-        while True:
-            try:
-                print dupes.next()
-            except StopIteration:
-                break
+        generators.append( duplicateKeyGenerator(string))
 
     if swapPairs:
-        swapper = pairSwapGenerator(string)
-        while True:
-            try:
-                print swapper.next()
-            except StopIteration:
-                break
+        generators.append( pairSwapGenerator(string))
 
     if swapShift:
-        shifter = shiftSwapGenerator(string)
-        while True:
-            try:
-                print shifter.next()
-            except StopIteration:
-                break
+        generators.append( shiftSwapGenerator(string))
 
     if swapNear:
-        neighbor = neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear)
+        generators.append( neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear))
+
+    for generator in generators:
         while True:
             try:
-                print neighbor.next()
+                print generator.next()
             except StopIteration:
                 break

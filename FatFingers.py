@@ -1,21 +1,30 @@
 #!/usr/bin/python
-#
+
+import sys
+
 #
 # FatFingers is a word-list generator which will produce variations of a given
 # string with typos you might accidnetaly make if you have fat fingers
 #
+def printUsage():
+    print 'FatFingers.py -p -s "string"'
+    print '  -d -- key duplicates: double each character in the string'
+    print '  -p -- pair swapping: swap each character pair in the string'
+    print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
+    print '  -n -- neighbor swapping: replace each character in the string with each near key'
+    print '  -N -- drunken neighbor: insert each neighbor before and after the target'
 
-import sys
+#
+# special values for
+#
+DELETE = -1 # removes a character in the string
+CAPS_LOCK = 1 # change the remaning characters to ALL CAPS
 
-# TODO add special values for
 #
-# DELETE = -1 # removes a character in the string
-# CAPS_LOCK = 1 # change the remaning characters to ALL CAPS
-#
-# N.B. this was generated from an Apple Keybard, YKBMV
+# N.B. these was generated from an Apple A1242 US Keybard, YKBLMV
 #
 quertyKeyNeighbors = {
-    #row 1
+    # row 1
     '`':  ['1', '\t'],
     '1':  ['`', '2', '\t', 'q'],
     '2':  ['1', '3', 'q', 'w'],
@@ -28,10 +37,10 @@ quertyKeyNeighbors = {
     '9':  ['7', '0', 'i', 'o'],
     '0':  ['9', '-', 'o', 'p'],
     '-':  ['0', '=', 'p', '['],
-    '+':  ['-', '[', ']'], # DELETE
+    '+':  ['-', '[', ']', DELETE],
     # row 2
     '\t': ['`', '1', 'q', 'a'],
-    'q':  ['1', '2', 'w', 'a'],
+    'q':  ['1', '2', 'w', 'a', CAPS_LOCK],
     'w':  ['2', '3', 'q', 'e', 'a', 's'],
     'e':  ['3', '4', 'w', 'r', 's', 'd'],
     'r':  ['4', '5', 'e', 't', 'd', 'f'],
@@ -41,11 +50,11 @@ quertyKeyNeighbors = {
     'i':  ['8', '9', 'u', 'o', 'j', 'k'],
     'o':  ['9', '0', 'i', 'p', 'k', 'l'],
     'p':  ['0', '-', 'o', '[', 'l', ';'],
-    '[':  ['-', '=', 'p', ']', ';', '\'', '\n'], # DELETE
-    ']':  ['=', '[', '\\', '\'', '\n'], # DELETE
-    '\\': [']', '\n'], # DELETE
+    '[':  ['-', '=', 'p', ']', ';', '\'', '\n', DELETE],
+    ']':  ['=', '[', '\\', '\'', '\n', DELETE],
+    '\\': [']', '\n', DELETE],
     # row 3
-    'a':  ['q', 'w', 's', '', 'z'], # CAPS_LOCK
+    'a':  ['q', 'w', 's', '', 'z', CAPS_LOCK],
     's':  ['w', 'e', 'a', 'd', 'z', 'x'],
     'd':  ['e', 'r', 's', 'f', 'x', 'c'],
     'f':  ['r', 't', 'd', 'g', 'c', 'v'],
@@ -55,7 +64,7 @@ quertyKeyNeighbors = {
     'k':  ['i', 'o', 'j', 'l', 'm', ','],
     'l':  ['o', 'p', 'k', ';', ',', '.'],
     ';':  ['p', '[', 'l', '\\', '.', '/'],
-    '\'': ['[', ']', ';', '\n', '/'], # DELETE
+    '\'': ['[', ']', ';', '\n', '/', DELETE],
     # row 4
     'z':  ['a', 's', '', 'x'],
     'x':  ['s', 'd', 'z', 'c', ' '],
@@ -72,7 +81,7 @@ quertyKeyNeighbors = {
 }
 
 quertyKeyShiftPairs = {
-    #row 1
+    # row 1
     '`':  '~',
     '1':  '!',
     '2':  '@',
@@ -147,7 +156,6 @@ def reverseAndMergeShiftPairs(shiftPairs=quertyKeyShiftPairs):
        mergedMap[value] = key
    return mergedMap
 
-# generator for shift-swapping each character in the string
 def shiftSwapGenerator( string='', shiftMap=quertyKeyShiftPairs):
     mergedMap = reverseAndMergeShiftPairs( quertyKeyShiftPairs)
     index = 0;
@@ -159,7 +167,6 @@ def shiftSwapGenerator( string='', shiftMap=quertyKeyShiftPairs):
         index = next
         yield swapped
 
-# generator for pair swapping each character in the string
 def pairSwapGenerator( string=''):
     index = 0;
     while index < (len(string) - 1):
@@ -188,31 +195,23 @@ def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeigh
         suffix = string[next:]
         char = string[index]
         for near in mergedMap[string[index]]:
-            swapped = prefix + near + suffix
-            yield swapped
-            if shiftNeighbors:
-                yield prefix + shiftMap[near] + suffix
-            if slurNeighbors:
-                yield prefix + near + char + suffix;
-                yield prefix + char + near + suffix;
+            if near == DELETE:
+                yield prefix[:-1] + suffix
+            elif near == CAPS_LOCK:
+                yield prefix + suffix.upper()
+            else:
+                yield prefix + near + suffix
                 if shiftNeighbors:
-                    yield prefix + shiftMap[near] + char + suffix;
-                    yield prefix + char + shiftMap[near] + suffix;
-        # /for
+                    yield prefix + shiftMap[near] + suffix
+                if slurNeighbors:
+                    yield prefix + near + char + suffix;
+                    yield prefix + char + near + suffix;
+                    if shiftNeighbors:
+                        yield prefix + shiftMap[near] + char + suffix;
+                        yield prefix + char + shiftMap[near] + suffix;
+        
         index = next;
 
-def printUsage():
-    print 'FatFingers.py -p -s "string"'
-    print '  -d -- key duplicates: double each character in the string'
-    print '  -p -- pair swapping: swap each character pair in the string'
-    print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
-    print '  -n -- neighbor swapping: replace each character in the string with each near key'
-    print '  -N -- drunken neighbor: insert each neighbor before and after the target'
-
-#
-# FatFingers.py -- genearte a word list of typos based on neighrest neighbor and shift pairing
-#
-#
 if __name__ == '__main__':
     dupeKeys = False
     swapPairs = False
@@ -220,13 +219,11 @@ if __name__ == '__main__':
     swapNear = False
     slurNear = False
     string = sys.argv[-1]
-    # print 'argv: %s string: %s' % (sys.argv, string)
 
     if (len(sys.argv) < 3):
         printUsage()
         sys.exit(2)
     
-    # read the arguments into booleans
     if '-d' in sys.argv:
         dupeKeys = True
     
@@ -244,8 +241,6 @@ if __name__ == '__main__':
         swapNear = True
         slurNear = True
 
-    # TODO combinaions
-
     if dupeKeys:
         dupes = duplicateKeyGenerator(string)
         while True:
@@ -255,7 +250,6 @@ if __name__ == '__main__':
                 break
 
     if swapPairs:
-        # print '-p %s' % (string)
         swapper = pairSwapGenerator(string)
         while True:
             try:
@@ -264,7 +258,6 @@ if __name__ == '__main__':
                 break
 
     if swapShift:
-        # print '-s %s' % (string)
         shifter = shiftSwapGenerator(string)
         while True:
             try:
@@ -273,7 +266,6 @@ if __name__ == '__main__':
                 break
 
     if swapNear:
-        #print '-n %@' % (string)
         neighbor = neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear)
         while True:
             try:

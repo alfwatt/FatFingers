@@ -13,6 +13,7 @@ def printUsage():
     print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
     print '  -n -- neighbor swapping: replace each character in the string with each near key'
     print '  -N -- drunken neighbor: insert each neighbor before and after the target'
+    print '  -o -- drop odd chars: drop every other character in the input'
 
 #
 # special values for
@@ -212,12 +213,22 @@ def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeigh
         
         index = next;
 
+def dropOddGenerator( string=''):
+    odd = ''
+    index = 0
+    for char in list(string):
+        if not index % 2:
+            odd = odd + char
+        index = index + 1
+    yield odd
+
 if __name__ == '__main__':
     dupeKeys = False
     swapPairs = False
     swapShift = False
     swapNear = False
     slurNear = False
+    dropOdd = False
     string = sys.argv[-1]
 
     if (len(sys.argv) < 3):
@@ -241,6 +252,9 @@ if __name__ == '__main__':
         swapShift = True
         swapNear = True
         slurNear = True
+    
+    if '-o' in sys.argv:
+        dropOdd = True
 
     generators = []
 
@@ -255,6 +269,9 @@ if __name__ == '__main__':
 
     if swapNear:
         generators.append( neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear))
+
+    if dropOdd:
+        generators.append( dropOddGenerator(string))
 
     for generator in generators:
         while True:

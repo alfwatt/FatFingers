@@ -13,7 +13,7 @@ def printUsage():
     print '  -s -- shift swapping: shift each caracter in the string (e.g. \'a\' > \'A\')'
     print '  -n -- neighbor swapping: replace each character in the string with each near key'
     print '  -N -- drunken neighbor: insert each neighbor before and after the target'
-    print '  -o -- drop odd chars: drop every other character in the input'
+    print '  -l -- leet speak: substitue numbers for letters'
 
 #
 # special values for
@@ -138,6 +138,20 @@ quertyKeyShiftPairs = {
     ' ':  ' '
 }
 
+leetPairs = {
+    'a': '4',
+    'b': '8',
+    'e': '3',
+    'g': '9',
+    'i': '1',
+    'l': '1',
+    'o': '0',
+    'r': '2',
+    's': '5',
+    't': '7',
+    'z': '2'
+}
+
 def duplicateKeyGenerator( string=''):
     index = 0;
     while index < len(string):
@@ -157,7 +171,7 @@ def pairSwapGenerator( string=''):
         index = next
         yield swapped
 
-def reverseAndMergeShiftPairs(shiftPairs=quertyKeyShiftPairs):
+def reverseAndMergePairs(shiftPairs=quertyKeyShiftPairs):
    pairKeys = shiftPairs.keys()
    mergedMap = shiftPairs.copy()
    for key in pairKeys:
@@ -166,7 +180,7 @@ def reverseAndMergeShiftPairs(shiftPairs=quertyKeyShiftPairs):
    return mergedMap
 
 def shiftSwapGenerator( string='', shiftMap=quertyKeyShiftPairs):
-    mergedMap = reverseAndMergeShiftPairs( quertyKeyShiftPairs)
+    mergedMap = reverseAndMergePairs( quertyKeyShiftPairs)
     index = 0;
     while index < len(string):
         next = index + 1
@@ -177,7 +191,7 @@ def shiftSwapGenerator( string='', shiftMap=quertyKeyShiftPairs):
         yield swapped
 
 def shiftAndMergeNeighorKeys(neighborMap=quertyKeyNeighbors, shiftMap=quertyKeyShiftPairs):
-    mergedShiftMap = reverseAndMergeShiftPairs(shiftMap)
+    mergedShiftMap = reverseAndMergePairs(shiftMap)
     neighborKeys = neighborMap.keys()
     mergedMap = neighborMap.copy()
     for key in neighborKeys:
@@ -187,7 +201,7 @@ def shiftAndMergeNeighorKeys(neighborMap=quertyKeyNeighbors, shiftMap=quertyKeyS
 
 def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeighbors=True, slurNeighbors=False):
     if (shiftNeighbors):
-        shiftMap = reverseAndMergeShiftPairs(quertyKeyShiftPairs)
+        shiftMap = reverseAndMergePairs(quertyKeyShiftPairs)
     mergedMap = shiftAndMergeNeighorKeys(neighborMap)
     index = 0;
     while index < len(string):
@@ -213,14 +227,20 @@ def neighborSwapGenerator( string='', neighborMap=quertyKeyNeighbors, shiftNeigh
         
         index = next;
 
-def dropOddGenerator( string=''):
-    odd = ''
+def leetGenerator( string=''):
+    lowerString = string.lower()
     index = 0
-    for char in list(string):
-        if not index % 2:
-            odd = odd + char
-        index = index + 1
-    yield odd
+    while index < len(string):
+        next = index + 1
+        char = lowerString[index]
+        if char in leetPairs:
+            leet = leetPairs[char]
+        else:
+            leet = char
+        swapped = string[:index] + leet + string[next:]
+        index = next
+        if swapped.lower() != lowerString:
+            yield swapped
 
 if __name__ == '__main__':
     dupeKeys = False
@@ -253,8 +273,8 @@ if __name__ == '__main__':
         swapNear = True
         slurNear = True
     
-    if '-o' in sys.argv:
-        dropOdd = True
+    if '-l' in sys.argv:
+        leetSpeak = True
 
     generators = []
 
@@ -270,8 +290,8 @@ if __name__ == '__main__':
     if swapNear:
         generators.append( neighborSwapGenerator(string, shiftNeighbors=swapShift, slurNeighbors=slurNear))
 
-    if dropOdd:
-        generators.append( dropOddGenerator(string))
+    if leetSpeak:
+        generators.append( leetGenerator(string))
 
     for generator in generators:
         while True:
